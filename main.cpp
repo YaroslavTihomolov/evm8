@@ -51,34 +51,41 @@ void ProcWarmingUp(const int* &array, int size) {
     for (int k = 0, i = 0; i < size; i++) k = array[k];
 }
 
-void Detour(const int* array, int size) {
+double Detour(const int* array, int size) {
     union ticks{
         unsigned long long t64;
         struct s32 { long th, tl; } t32;
     } start{}, end{};
     ProcWarmingUp(array, size);
+    double sum = 0;
     asm volatile ("rdtsc\n":"=a"(start.t32.th), "=d"(start.t32.tl) :: "memory");
-    for (int k = 0, h = 0; h < size * K; h++) {k = array[k];// std::cout << k << ' ';
+    for (int k = 0, h = 0; h < size * K; h++) {
+        k = array[k];// std::cout << k << ' ';
+        sum += k;
     }
     asm volatile ("rdtsc\n":"=a"(end.t32.th), "=d"(end.t32.tl) :: "memory");
     std::cout << "Count of elements:" << size;
-    std::cout << "       Time taken:" <<(end.t64-start.t64) / (size * K) << '\n';
+    std::cout << "       Time taken:" <<(end.t64-start.t64) / (size * K) << "          ";
     delete [] array;
+    return sum;
 }
 
 int main() {
     int* array;
+    double sum;
     for (int i = min_size; i <= max_size; i *= 2) {
         array = FillForward(i);
-        Detour(array, i);
+        sum = Detour(array, i);
+        std::cout << sum << '\n';
 
         array = FillReverse(i);
-        Detour(array, i);
+        sum = Detour(array, i);
+        std::cout << sum << '\n';
 
 
         array = FillRandom(i);
-        Detour(array, i);
-
+        sum = Detour(array, i);
+        std::cout << sum << '\n';
     }
     return 0;
 }
